@@ -55,6 +55,7 @@
 #endif
 #include "shutdown.h"
 #include "mempools.h"
+#include "built_in_test.h"
 
 /*
  * HW resources used:
@@ -188,6 +189,7 @@ void assert_failed(uint8_t* file, uint32_t line) {
 }
 
 int main(void) {
+
 	halInit();
 	chSysInit();
 
@@ -226,6 +228,8 @@ int main(void) {
 
 	ledpwm_init();
 	mc_interface_init();
+
+	built_in_test_init();
 
 	commands_init();
 
