@@ -2778,7 +2778,11 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 			const float lambda = conf_now->foc_motor_flux_linkage;
 			const float iq_now = motor_now->m_motor_state.iq_filter;
 			id_set_tmp = (lambda - sqrtf(SQ(lambda) + 8.0 * SQ(ld_lq_diff) * SQ(iq_now))) / (4.0 * ld_lq_diff);
-			iq_set_tmp = SIGN(iq_set_tmp) * sqrtf(SQ(iq_set_tmp) - SQ(id_set_tmp));
+			if(id_set_tmp >= iq_set_tmp){
+				iq_set_tmp = SIGN(iq_set_tmp) * sqrtf(SQ(iq_set_tmp) - SQ(id_set_tmp));
+			}else{
+				iq_set_tmp = 0.0;
+			}
 		}
 
 		const float mod_q = motor_now->m_motor_state.mod_q;
