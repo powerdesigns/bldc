@@ -38,7 +38,7 @@
 
 // Private functions
 static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv);
-static void terminal_cmd_BIT_check_all_leg(int argc, const char **argv);
+static void terminal_cmd_BIT_check_all_legs(int argc, const char **argv);
 
 void single_pulse_test (
 		float first_pulse_dwell_us,
@@ -70,10 +70,10 @@ void built_in_test_init(void) {
 			terminal_cmd_BIT_single_pulse_test);
 
 	terminal_register_command_callback(
-			"BIT_check_all_leg",
-			"Check all legs with a simple pulse test for each leg combination - For example: BIT_check_all_leg 10.2 2.3",
+			"BIT_check_all_legs",
+			"Check all legs with a simple pulse test for each leg combination - For example: BIT_check_all_legs 10.2 2.3",
 			"[pulse_dwell_us] [pulse_off_us]",
-			terminal_cmd_BIT_check_all_leg);
+			terminal_cmd_BIT_check_all_legs);
 }
 
 static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv) {
@@ -238,7 +238,7 @@ static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv) {
 }
 
 
-static void terminal_cmd_BIT_check_all_leg(int argc, const char **argv){
+static void terminal_cmd_BIT_check_all_legs(int argc, const char **argv){
 	(void)argc;
 	(void)argv;
 
@@ -380,7 +380,7 @@ static void terminal_cmd_BIT_check_all_leg(int argc, const char **argv){
 		/**************************************************************************************/
 	}
 	else {
-		commands_printf("2 arguments required. For example: BIT_check_all_leg 10.2 2.3");
+		commands_printf("2 arguments required. For example: BIT_check_all_legs 10.2 2.3");
 	}
 
 	commands_printf(" ");
@@ -401,8 +401,7 @@ void single_pulse_test (
 	*mcconf 	= *mc_interface_get_configuration();
 	*mcconf_old = *mc_interface_get_configuration();
 
-	// Reset the watchdog
-	timeout_feed_WDT(THREAD_TIMER);
+	timeout_feed_WDT(THREAD_MCPWM);
 
 	/**************************************************************************************/
 	if(leg[0] == supply_leg[0]) {
@@ -501,7 +500,7 @@ void single_pulse_test (
 		TIM8->CNT = 0;
 		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse = 225;
+		TIM_OCInitStructure.TIM_Pulse = 250;
 		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
 		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
@@ -521,7 +520,7 @@ void single_pulse_test (
 		TIM2->CNT = 0;
 		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse = 225;
+		TIM_OCInitStructure.TIM_Pulse = 250;
 		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
 		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
@@ -601,12 +600,18 @@ void single_pulse_test (
 	float V_L1 = 0, V_L2 = 0, V_L3 = 0;
 	float I_L1 = 0, I_L2 = 0, I_L3 = 0;
 
-	int curr1_offset;
-	int curr2_offset;
-	int curr3_offset;
 
-	mcpwm_foc_get_current_offsets(&curr1_offset, &curr2_offset, &curr3_offset, false);
+	float curr0_offset = 0;
+	float curr1_offset = 0;
+	float curr2_offset = 0;
 
+	if(mcconf_old->motor_type == MOTOR_TYPE_FOC) {
+//		float curr0_offset;
+//		float curr1_offset;
+//		float curr2_offset;
+
+	mcpwm_foc_get_current_offsets(&curr0_offset, &curr1_offset, &curr2_offset, false);
+	}
 	switch (leg[0]) {
 	case 'A':
 		while( !(TIM1->SR & (TIM_SR_CC1IF)) );
@@ -632,14 +637,14 @@ void single_pulse_test (
 	TIM_DeInit(TIM1);
 
 	V_L1 = ((float)ADC_Value[ADC_IND_SENS1] * V_REG / 4096.0) * ((VIN_R1 + VIN_R2) / VIN_R2) * ADC_VOLTS_PH_FACTOR;
-	I_L1 = (((float)(ADC_Value[ADC_IND_CURR1] - curr1_offset)) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
+	I_L1 = (((float)(ADC_Value[ADC_IND_CURR1] - ((uint16_t)curr0_offset))) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
 
 	V_L2 = ((float)ADC_Value[ADC_IND_SENS2] * V_REG / 4096.0) * ((VIN_R1 + VIN_R2) / VIN_R2) * ADC_VOLTS_PH_FACTOR;
-	I_L2 = (((float)(ADC_Value[ADC_IND_CURR2] - curr2_offset)) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
+	I_L2 = (((float)(ADC_Value[ADC_IND_CURR2] - ((uint16_t)curr1_offset))) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
 
 	V_L3 = ((float)ADC_Value[ADC_IND_SENS3] * V_REG / 4096.0) * ((VIN_R1 + VIN_R2) / VIN_R2) * ADC_VOLTS_PH_FACTOR;
 #ifdef HW_HAS_3_SHUNTS
-	I_L3 = (((float)(ADC_Value[ADC_IND_CURR3] - curr3_offset)) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
+	I_L3 = (((float)(ADC_Value[ADC_IND_CURR3] - ((uint16_t)curr2_offset))) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
 #endif
 
 	commands_printf("V L1: %.2f V \tV L2: %.2f V \tV L3: %.2f V", (double)V_L1,(double)V_L2,(double)V_L3);
@@ -686,7 +691,7 @@ void single_pulse_test (
 
 	/**************************************************************************************/
 	// Reset the watchdog
-	timeout_feed_WDT(THREAD_TIMER);
+	timeout_feed_WDT(THREAD_MCPWM);
 
 	mempools_free_mcconf(mcconf);
 	mempools_free_mcconf(mcconf_old);
