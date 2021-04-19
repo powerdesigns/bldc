@@ -27,7 +27,7 @@
 
 //#define HW_AXIOM_USE_DAC
 //#define HW_AXIOM_USE_MOTOR_TEMP
-//#define HW_HAS_INPUT_CURRENT_SENSOR
+#define HW_HAS_INPUT_CURRENT_SENSOR
 #define HW_USE_LINE_TO_LINE
 #define	HW_AXIOM_FORCE_HIGH_CURRENT_MEASUREMENTS
 #define HW_VERSION_AXIOM
@@ -312,9 +312,9 @@
 #define FOC_CONTROL_LOOP_FREQ_DIVIDER	1
 
 // Setting limits
-#define HW_LIM_CURRENT					-425.0, 425.0
-#define HW_LIM_CURRENT_IN				-400.0, 400.0
-#define HW_LIM_CURRENT_ABS				0.0, 400.0
+#define HW_LIM_CURRENT					-825.0, 825.0
+#define HW_LIM_CURRENT_IN				-800.0, 800.0
+#define HW_LIM_CURRENT_ABS				0.0, 800.0
 #define HW_LIM_VIN						0.0, 420.0
 #define HW_LIM_ERPM						-100e3, 100e3
 #define HW_LIM_DUTY_MIN					0.0, 0.1
