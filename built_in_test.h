@@ -20,8 +20,16 @@
 #ifndef BUILT_IN_TEST_H_
 #define BUILT_IN_TEST_H_
 
+//
+typedef enum {
+	BIT_IDLE = 0,
+	BIT_RUN,
+	BIT_STOP
+} BIT_state_t;
+
 // Functions
 void built_in_test_init(void);
-
+int BIT_pulse_test(int total_pulse, float pulse_dwell_us, float pulse_off_us);
+FlagStatus BIT_get_state(void);
 
 #endif /* BUILT_IN_TEST_H_ */
