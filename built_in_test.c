@@ -40,7 +40,7 @@
 volatile BIT_state_t BIT_state;
 
 // Private functions
-static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv);
+//static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv);
 static void terminal_cmd_BIT_multiple_pulse_test(int argc, const char **argv);
 static void terminal_cmd_BIT_check_all_legs(int argc, const char **argv);
 
@@ -64,11 +64,11 @@ void built_in_test_init(void){
 
 	BIT_state = BIT_IDLE;
 
-	terminal_register_command_callback(
-			"BIT_single_pulse_test",
-			"Trigger a single pulse test - For example: BIT_single_pulse_test 10.2 2.3 A Bottom --supply-with C",
-			"[pulse_dwell_us] [pulse_off_us] [leg: A, B or C] [side: T or B] [argument(optional) --supply-with] [supply_leg(optional): A, B or C]",
-			terminal_cmd_BIT_single_pulse_test);
+//	terminal_register_command_callback(
+//			"BIT_single_pulse_test",
+//			"Trigger a single pulse test - For example: BIT_single_pulse_test 10.2 2.3 A Bottom --supply-with C",
+//			"[pulse_dwell_us] [pulse_off_us] [leg: A, B or C] [side: T or B] [argument(optional) --supply-with] [supply_leg(optional): A, B or C]",
+//			terminal_cmd_BIT_single_pulse_test);
 
 	terminal_register_command_callback(
 			"BIT_multiple_pulse_test",
@@ -83,164 +83,164 @@ void built_in_test_init(void){
 			terminal_cmd_BIT_check_all_legs);
 }
 
-static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv) {
-	(void)argc;
-	(void)argv;
-
-	char command[32];
-	float pulse_dwell_us = 0;
-	float pulse_off_us = 0;
-	char leg[10];
-	char supply_leg[10];
-	char side[10];
-	char argument[32];
-
-	mc_interface_select_motor_thread(1);
-	mc_state m_state = mc_interface_get_state();
-
-	if (m_state == MC_STATE_RUNNING){
-		commands_printf("Motor Control is Running \n");
-		return;
-	}
-
-	if( (argc == 5) || (argc == 7) ) {
-		sscanf(argv[0], "%s", command);
-		sscanf(argv[1], "%f", &pulse_dwell_us);
-		sscanf(argv[2], "%f", &pulse_off_us);
-		sscanf(argv[3], "%s", leg);
-		sscanf(argv[4], "%s", side);
-
-		if ( !((leg[0] == 'A') || (leg[0] == 'B') || (leg[0] == 'C'))){
-			commands_printf("Invalid leg. Use A, B or C \n");
-			return;
-		}
-		if ( !((side[0] == 'T') || (side[0] == 'B'))){
-			commands_printf("Invalid side. Use T, TOP, B or BOTTOM \n");
-			return;
-		}
-
-		if(argc == 7) {
-			sscanf(argv[5], "%s", argument);
-			sscanf(argv[6], "%s", supply_leg);
-
-			if ( !((supply_leg[0] == 'A') || (supply_leg[0] == 'B') || (supply_leg[0] == 'C'))){
-				commands_printf("Invalid supply leg. Use A, B or C \n");
-				return;
-			}
-			if(leg[0] == supply_leg[0]) {
-				commands_printf("Supply with a different leg. Aborting.");
-				return;
-			}
-			if( strcmp(argument, "--supply-with") != 0 ){
-				commands_printf("Invalid argument. Use ""--supply-with"" \n");
-				return;
-			}
-		}
-		else{
-			argument[0] = 0;
-			supply_leg[0] = 0;
-		}
-
-		/**************************************************************************************/
-		utils_sys_lock_cnt();
-
-		mc_configuration *mcconf = mempools_alloc_mcconf();
-		*mcconf = *mc_interface_get_configuration();
-
-		int motor_old = mc_interface_get_motor_thread();
-
-		mc_interface_select_motor_thread(1);
-		mc_interface_unlock();
-		mc_interface_release_motor();
-		mc_interface_lock();
-
-		mc_interface_select_motor_thread(2);
-		mc_interface_unlock();
-		mc_interface_release_motor();
-		mc_interface_lock();
-
-		// Disable timeout
-		systime_t tout = timeout_get_timeout_msec();
-		float tout_c = timeout_get_brake_current();
-		timeout_reset();
-		timeout_configure(65000, 0.0);
-		timeout_feed_WDT(THREAD_MCPWM);
-		timeout_configure_IWDT_slowest();
-
-		/**************************************************************************************/
-		float period_new = pulse_dwell_us/1000000.0 + pulse_off_us/1000000.0;
-		uint32_t foc_f_sw_old = mcconf->foc_f_sw;
-		float period_old = 1.0/(float)foc_f_sw_old;
-
-		if( period_new > period_old) {
-			commands_printf("Period too long, must be less than %.2f usec. Aborting.", (double)(period_old * 1000000.0));
-		}
-		else{
-
-			float m_I_max_set = mcconf->l_current_max;
-			float m_V_max_set = mcconf->l_max_vin;
-			float m_V_in = GET_INPUT_VOLTAGE();
-
-			commands_printf("I Max set: %.2f A \tV Max set: %.2f V \tV in: %.2f V \n", (double)m_I_max_set,(double)m_V_max_set,(double)m_V_in);
-
-			if(argc == 7) {
-				commands_printf("%s %.2f %.2f %s %s supply with %s", command, (double)pulse_dwell_us, (double)pulse_off_us, leg, side, supply_leg);
-			}
-			else {
-				commands_printf("%s %.2f %.2f %s %s ", command, (double)pulse_dwell_us, (double)pulse_off_us, leg, side);
-			}
-
-			multi_pulse_test(1, pulse_dwell_us, pulse_off_us, leg, side, supply_leg);
-
-			switch (mcconf->motor_type) {
-			case MOTOR_TYPE_BLDC:
-			case MOTOR_TYPE_DC:
-				BIT_mcpwm_timer_reinit(mcconf->m_bldc_f_sw_max);
-//				dmaStreamAllocate(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)), 5, (stm32_dmaisr_t)mcpwm_adc_int_handler, (void *)0);
-				break;
-
-			case MOTOR_TYPE_FOC:
-				BIT_mcpwm_foc_timer_reinit(mcconf->foc_f_sw);
-//				dmaStreamAllocate(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)), 5, (stm32_dmaisr_t)mcpwm_foc_adc_int_handler, (void *)0);
-				break;
-
-			case MOTOR_TYPE_GPD:
-				break;
-
-			default:
-				break;
-			}
-		}
-
-		/**************************************************************************************/
-		timeout_configure_IWDT();
-		timeout_feed_WDT(THREAD_MCPWM);
-		timeout_configure(tout, tout_c);
-
-		mc_interface_set_configuration(mcconf);
-		mempools_free_mcconf(mcconf);
-
-		mc_interface_select_motor_thread(1);
-		mc_interface_release_motor();
-		mc_interface_unlock();
-		mc_interface_select_motor_thread(2);
-		mc_interface_release_motor();
-		mc_interface_unlock();
-
-		mc_interface_select_motor_thread(motor_old);
-		mc_interface_release_motor();
-
-		utils_sys_unlock_cnt();
-
-		/**************************************************************************************/
-
-		commands_printf("Fired!");
-	}
-	else {
-		commands_printf("4 or 6 arguments required. For example: BIT_single_pulse_test 10.2 2.3 A Bottom --supply-with C");
-	}
-	commands_printf(" ");
-}
+//static void terminal_cmd_BIT_single_pulse_test(int argc, const char **argv) {
+//	(void)argc;
+//	(void)argv;
+//
+//	char command[32];
+//	float pulse_dwell_us = 0;
+//	float pulse_off_us = 0;
+//	char leg[10];
+//	char supply_leg[10];
+//	char side[10];
+//	char argument[32];
+//
+//	mc_interface_select_motor_thread(1);
+//	mc_state m_state = mc_interface_get_state();
+//
+//	if (m_state == MC_STATE_RUNNING){
+//		commands_printf("Motor Control is Running \n");
+//		return;
+//	}
+//
+//	if( (argc == 5) || (argc == 7) ) {
+//		sscanf(argv[0], "%s", command);
+//		sscanf(argv[1], "%f", &pulse_dwell_us);
+//		sscanf(argv[2], "%f", &pulse_off_us);
+//		sscanf(argv[3], "%s", leg);
+//		sscanf(argv[4], "%s", side);
+//
+//		if ( !((leg[0] == 'A') || (leg[0] == 'B') || (leg[0] == 'C'))){
+//			commands_printf("Invalid leg. Use A, B or C \n");
+//			return;
+//		}
+//		if ( !((side[0] == 'T') || (side[0] == 'B'))){
+//			commands_printf("Invalid side. Use T, TOP, B or BOTTOM \n");
+//			return;
+//		}
+//
+//		if(argc == 7) {
+//			sscanf(argv[5], "%s", argument);
+//			sscanf(argv[6], "%s", supply_leg);
+//
+//			if ( !((supply_leg[0] == 'A') || (supply_leg[0] == 'B') || (supply_leg[0] == 'C'))){
+//				commands_printf("Invalid supply leg. Use A, B or C \n");
+//				return;
+//			}
+//			if(leg[0] == supply_leg[0]) {
+//				commands_printf("Supply with a different leg. Aborting.");
+//				return;
+//			}
+//			if( strcmp(argument, "--supply-with") != 0 ){
+//				commands_printf("Invalid argument. Use ""--supply-with"" \n");
+//				return;
+//			}
+//		}
+//		else{
+//			argument[0] = 0;
+//			supply_leg[0] = 0;
+//		}
+//
+//		/**************************************************************************************/
+//		utils_sys_lock_cnt();
+//
+//		mc_configuration *mcconf = mempools_alloc_mcconf();
+//		*mcconf = *mc_interface_get_configuration();
+//
+//		int motor_old = mc_interface_get_motor_thread();
+//
+//		mc_interface_select_motor_thread(1);
+//		mc_interface_unlock();
+//		mc_interface_release_motor();
+//		mc_interface_lock();
+//
+//		mc_interface_select_motor_thread(2);
+//		mc_interface_unlock();
+//		mc_interface_release_motor();
+//		mc_interface_lock();
+//
+//		// Disable timeout
+//		systime_t tout = timeout_get_timeout_msec();
+//		float tout_c = timeout_get_brake_current();
+//		timeout_reset();
+//		timeout_configure(65000, 0.0);
+//		timeout_feed_WDT(THREAD_MCPWM);
+//		timeout_configure_IWDT_slowest();
+//
+//		/**************************************************************************************/
+//		float period_new = pulse_dwell_us/1000000.0 + pulse_off_us/1000000.0;
+//		uint32_t foc_f_sw_old = mcconf->foc_f_sw;
+//		float period_old = 1.0/(float)foc_f_sw_old;
+//
+//		if( period_new > period_old) {
+//			commands_printf("Period too long, must be less than %.2f usec. Aborting.", (double)(period_old * 1000000.0));
+//		}
+//		else{
+//
+//			float m_I_max_set = mcconf->l_current_max;
+//			float m_V_max_set = mcconf->l_max_vin;
+//			float m_V_in = GET_INPUT_VOLTAGE();
+//
+//			commands_printf("I Max set: %.2f A \tV Max set: %.2f V \tV in: %.2f V \n", (double)m_I_max_set,(double)m_V_max_set,(double)m_V_in);
+//
+//			if(argc == 7) {
+//				commands_printf("%s %.2f %.2f %s %s supply with %s", command, (double)pulse_dwell_us, (double)pulse_off_us, leg, side, supply_leg);
+//			}
+//			else {
+//				commands_printf("%s %.2f %.2f %s %s ", command, (double)pulse_dwell_us, (double)pulse_off_us, leg, side);
+//			}
+//
+//			multi_pulse_test(1, pulse_dwell_us, pulse_off_us, leg, side, supply_leg);
+//
+//			switch (mcconf->motor_type) {
+//			case MOTOR_TYPE_BLDC:
+//			case MOTOR_TYPE_DC:
+//				BIT_mcpwm_timer_reinit(mcconf->m_bldc_f_sw_max);
+////				dmaStreamAllocate(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)), 5, (stm32_dmaisr_t)mcpwm_adc_int_handler, (void *)0);
+//				break;
+//
+//			case MOTOR_TYPE_FOC:
+//				BIT_mcpwm_foc_timer_reinit(mcconf->foc_f_sw);
+////				dmaStreamAllocate(STM32_DMA_STREAM(STM32_DMA_STREAM_ID(2, 4)), 5, (stm32_dmaisr_t)mcpwm_foc_adc_int_handler, (void *)0);
+//				break;
+//
+//			case MOTOR_TYPE_GPD:
+//				break;
+//
+//			default:
+//				break;
+//			}
+//		}
+//
+//		/**************************************************************************************/
+//		timeout_configure_IWDT();
+//		timeout_feed_WDT(THREAD_MCPWM);
+//		timeout_configure(tout, tout_c);
+//
+//		mc_interface_set_configuration(mcconf);
+//		mempools_free_mcconf(mcconf);
+//
+//		mc_interface_select_motor_thread(1);
+//		mc_interface_release_motor();
+//		mc_interface_unlock();
+//		mc_interface_select_motor_thread(2);
+//		mc_interface_release_motor();
+//		mc_interface_unlock();
+//
+//		mc_interface_select_motor_thread(motor_old);
+//		mc_interface_release_motor();
+//
+//		utils_sys_unlock_cnt();
+//
+//		/**************************************************************************************/
+//
+//		commands_printf("Fired!");
+//	}
+//	else {
+//		commands_printf("4 or 6 arguments required. For example: BIT_single_pulse_test 10.2 2.3 A Bottom --supply-with C");
+//	}
+//	commands_printf(" ");
+//}
 
 static void terminal_cmd_BIT_multiple_pulse_test(int argc, const char **argv) {
 	(void)argc;
@@ -708,17 +708,17 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 		switch (leg[0]) {
 		case 'A':
 			palSetPad(GPIOB, 13);
-			chThdSleepMicroseconds(100);
+			chThdSleepMicroseconds(500);
 			palClearPad(GPIOB, 13);
 			break;
 		case 'B':
 			palSetPad(GPIOB, 14);
-			chThdSleepMicroseconds(100);
+			chThdSleepMicroseconds(500);
 			palClearPad(GPIOB, 14);
 			break;
 		case 'C':
 			palSetPad(GPIOB, 15);
-			chThdSleepMicroseconds(100);
+			chThdSleepMicroseconds(500);
 			palClearPad(GPIOB, 15);
 			break;
 		}
@@ -749,36 +749,36 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 		break;
 	}
 
-	chThdSleepMicroseconds(50);	// wait for mosfet to fully turn ON
+	chThdSleepMicroseconds(500);	// wait for mosfet to fully turn ON
 
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
-
-	switch (mcconf->motor_type) {
-	case MOTOR_TYPE_BLDC:
-	case MOTOR_TYPE_DC:
-		TIM8->CNT = 0;
-		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse = 250;
-		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-		TIM_OC1Init(TIM8, &TIM_OCInitStructure);
-		TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);
-		TIM_OC2Init(TIM8, &TIM_OCInitStructure);
-		TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
-		TIM_OC3Init(TIM8, &TIM_OCInitStructure);
-		TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);
-
-		TIM_ARRPreloadConfig(TIM8, ENABLE);
-		TIM_CCPreloadControl(TIM8, ENABLE);
-
-
-		break;
-
-	case MOTOR_TYPE_FOC:
+//
+//	switch (mcconf->motor_type) {
+//	case MOTOR_TYPE_BLDC:
+//	case MOTOR_TYPE_DC:
+//		TIM8->CNT = 0;
+//		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+//		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+//		TIM_OCInitStructure.TIM_Pulse = 250;
+//		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+//		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
+//		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+//		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+//		TIM_OC1Init(TIM8, &TIM_OCInitStructure);
+//		TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);
+//		TIM_OC2Init(TIM8, &TIM_OCInitStructure);
+//		TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
+//		TIM_OC3Init(TIM8, &TIM_OCInitStructure);
+//		TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);
+//
+//		TIM_ARRPreloadConfig(TIM8, ENABLE);
+//		TIM_CCPreloadControl(TIM8, ENABLE);
+//
+//
+//		break;
+//
+//	case MOTOR_TYPE_FOC:
 //		TIM_DeInit(TIM2);
 //		TIM2->CNT = 0;
 //
@@ -794,7 +794,7 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 //
 //		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 //		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-//		TIM_OCInitStructure.TIM_Pulse = 20;
+//		TIM_OCInitStructure.TIM_Pulse = 250;
 //		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 //		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
 //		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
@@ -828,15 +828,15 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 //		TIM_ITConfig(TIM2, TIM_IT_CC2, ENABLE);
 ////		utils_sys_unlock_cnt();
 //		nvicEnableVector(TIM2_IRQn, 6);
-
-		break;
-
-	case MOTOR_TYPE_GPD:
-		break;
-
-	default:
-		break;
-	}
+//
+//		break;
+//
+//	case MOTOR_TYPE_GPD:
+//		break;
+//
+//	default:
+//		break;
+//	}
 
 	TIM_DeInit(TIM1);
 	TIM1->CNT = 0;
@@ -909,7 +909,10 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 
 	I_Lx_temp[0] += curr0_offset;
 	I_Lx_temp[1] += curr1_offset;
+
+#ifdef HW_HAS_3_SHUNTS
 	I_Lx_temp[2] += curr2_offset;
+#endif
 
 	switch (leg[0]) {
 	case 'A':
@@ -925,45 +928,49 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 
 		TIMER_UPDATE_DUTY(0, 0, 0);
 
-		I_Lx_temp[0] -= curr0_offset;
 		V_Lx_temp [0] /= (float)sample;
+		I_Lx_temp[0] -= curr0_offset;
 		I_Lx_temp [0] /= (float)sample;
 		break;
 
 	case 'B':
 
+		TIMER_UPDATE_DUTY(0, compare_new, 0);
 		for(sample=0;sample<tot_pulse;sample++){
-			TIMER_UPDATE_DUTY(0, compare_new, 0);
-			while( !(TIM1->SR & (TIM_SR_CC2IF)) );
+			while( !(TIM1->SR & (TIM_FLAG_CC2)) );
 			TIM_ClearFlag(TIM1, TIM_FLAG_CC2);
 
 			V_Lx_temp [1] += (float)ADC_Value[ADC_IND_SENS2];
 			I_Lx_temp [1] += (float)ADC_Value[ADC_IND_CURR2];
 		}
 
-		I_Lx_temp[1] -= curr1_offset;
+		TIMER_UPDATE_DUTY(0, 0, 0);
 
-		V_Lx_temp [1] /= (float)sample;
-		I_Lx_temp [1] /= (float)sample;
+		V_Lx_temp[1] /= (float)sample;
+		I_Lx_temp[1] -= curr1_offset;
+		I_Lx_temp[1] /= (float)sample;
 		break;
 
 	case 'C':
 
+		TIMER_UPDATE_DUTY(0, 0, compare_new);
 		for(sample=0;sample<tot_pulse;sample++){
-			TIMER_UPDATE_DUTY(0, 0, compare_new);
-			while( !(TIM1->SR & (TIM_SR_CC3IF)) );
+			while( !(TIM1->SR & (TIM_FLAG_CC3)) );
 			TIM_ClearFlag(TIM1, TIM_FLAG_CC3);
 
 			V_Lx_temp [2] += (float)ADC_Value[ADC_IND_SENS3];
 #ifdef HW_HAS_3_SHUNTS
-			I_Lx_temp [2] += (float)ADC_Value[ADC_IND_CURR3];
+			I_Lx_temp[2] += (float)ADC_Value[ADC_IND_CURR3];
 #endif
 		}
 
-		I_Lx_temp[2] -= curr2_offset;
+		TIMER_UPDATE_DUTY(0, 0, 0);
 
 		V_Lx_temp [2] /= (float)sample;
+#ifdef HW_HAS_3_SHUNTS
+		I_Lx_temp[2] -= curr2_offset;
 		I_Lx_temp [2] /= (float)sample;
+#endif
 		break;
 	}
 
