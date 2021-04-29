@@ -753,90 +753,90 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 	TIM_OCInitTypeDef  TIM_OCInitStructure;
-//
-//	switch (mcconf->motor_type) {
-//	case MOTOR_TYPE_BLDC:
-//	case MOTOR_TYPE_DC:
-//		TIM8->CNT = 0;
-//		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-//		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-//		TIM_OCInitStructure.TIM_Pulse = 250;
-//		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-//		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-//		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-//		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-//		TIM_OC1Init(TIM8, &TIM_OCInitStructure);
-//		TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);
-//		TIM_OC2Init(TIM8, &TIM_OCInitStructure);
-//		TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
-//		TIM_OC3Init(TIM8, &TIM_OCInitStructure);
-//		TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);
-//
-//		TIM_ARRPreloadConfig(TIM8, ENABLE);
-//		TIM_CCPreloadControl(TIM8, ENABLE);
-//
-//
-//		break;
-//
-//	case MOTOR_TYPE_FOC:
-//		TIM_DeInit(TIM2);
-//		TIM2->CNT = 0;
-//
-//		// Time Base configuration
-//		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
-//
-//		TIM_TimeBaseStructure.TIM_Prescaler = 0;
-//		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
-//		TIM_TimeBaseStructure.TIM_Period = 0xFFFF;
-//		TIM_TimeBaseStructure.TIM_ClockDivision = 0;
-//		TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
-//		TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
-//
-//		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
-//		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-//		TIM_OCInitStructure.TIM_Pulse = 250;
-//		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
-//		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
-//		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
-//		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
-//		TIM_OC1Init(TIM2, &TIM_OCInitStructure);
-//		TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);
-//		TIM_OC2Init(TIM2, &TIM_OCInitStructure);
-//		TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
-//		TIM_OC3Init(TIM2, &TIM_OCInitStructure);
-//		TIM_OC3PreloadConfig(TIM2, TIM_OCPreload_Enable);
-//
-//		TIM_ARRPreloadConfig(TIM2, ENABLE);
-//		TIM_CCPreloadControl(TIM2, ENABLE);
-//
-//		// PWM outputs have to be enabled in order to trigger ADC on CCx
-//		TIM_CtrlPWMOutputs(TIM2, ENABLE);
-//
-//		// TIM1 Master and TIM2 slave
-//		TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_Update);
-//		TIM_SelectMasterSlaveMode(TIM1, TIM_MasterSlaveMode_Enable);
-//		TIM_SelectInputTrigger(TIM2, TIM_TS_ITR0);
-//		TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);
-//
-//
-//		TIM_Cmd(TIM2, ENABLE);
-//
-//		// Sample intervals
-//		TIMER_UPDATE_SAMP(MCPWM_FOC_CURRENT_SAMP_OFFSET);
-//
-//		// Enable CC2 interrupt, which will be fired in V0 and V7
-//		TIM_ITConfig(TIM2, TIM_IT_CC2, ENABLE);
-////		utils_sys_unlock_cnt();
-//		nvicEnableVector(TIM2_IRQn, 6);
-//
-//		break;
-//
-//	case MOTOR_TYPE_GPD:
-//		break;
-//
-//	default:
-//		break;
-//	}
+
+	switch (mcconf->motor_type) {
+	case MOTOR_TYPE_BLDC:
+	case MOTOR_TYPE_DC:
+		TIM8->CNT = 0;
+		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+		TIM_OCInitStructure.TIM_Pulse = 250;
+		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
+		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+		TIM_OC1Init(TIM8, &TIM_OCInitStructure);
+		TIM_OC1PreloadConfig(TIM8, TIM_OCPreload_Enable);
+		TIM_OC2Init(TIM8, &TIM_OCInitStructure);
+		TIM_OC2PreloadConfig(TIM8, TIM_OCPreload_Enable);
+		TIM_OC3Init(TIM8, &TIM_OCInitStructure);
+		TIM_OC3PreloadConfig(TIM8, TIM_OCPreload_Enable);
+
+		TIM_ARRPreloadConfig(TIM8, ENABLE);
+		TIM_CCPreloadControl(TIM8, ENABLE);
+
+
+		break;
+
+	case MOTOR_TYPE_FOC:
+		TIM_DeInit(TIM2);
+		TIM2->CNT = 0;
+
+		// Time Base configuration
+		RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM2, ENABLE);
+
+		TIM_TimeBaseStructure.TIM_Prescaler = 0;
+		TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+		TIM_TimeBaseStructure.TIM_Period = 0xFFFF;
+		TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+		TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+		TIM_TimeBaseInit(TIM2, &TIM_TimeBaseStructure);
+
+		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+		TIM_OCInitStructure.TIM_Pulse = 100;
+		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
+		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+		TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+		TIM_OC1Init(TIM2, &TIM_OCInitStructure);
+		TIM_OC1PreloadConfig(TIM2, TIM_OCPreload_Enable);
+		TIM_OC2Init(TIM2, &TIM_OCInitStructure);
+		TIM_OC2PreloadConfig(TIM2, TIM_OCPreload_Enable);
+		TIM_OC3Init(TIM2, &TIM_OCInitStructure);
+		TIM_OC3PreloadConfig(TIM2, TIM_OCPreload_Enable);
+
+		TIM_ARRPreloadConfig(TIM2, ENABLE);
+		TIM_CCPreloadControl(TIM2, ENABLE);
+
+		// PWM outputs have to be enabled in order to trigger ADC on CCx
+		TIM_CtrlPWMOutputs(TIM2, ENABLE);
+
+		// TIM1 Master and TIM2 slave
+		TIM_SelectOutputTrigger(TIM1, TIM_TRGOSource_Update);
+		TIM_SelectMasterSlaveMode(TIM1, TIM_MasterSlaveMode_Enable);
+		TIM_SelectInputTrigger(TIM2, TIM_TS_ITR0);
+		TIM_SelectSlaveMode(TIM2, TIM_SlaveMode_Reset);
+
+
+		TIM_Cmd(TIM2, ENABLE);
+
+		// Sample intervals
+		TIMER_UPDATE_SAMP(MCPWM_FOC_CURRENT_SAMP_OFFSET);
+
+		// Enable CC2 interrupt, which will be fired in V0 and V7
+		TIM_ITConfig(TIM2, TIM_IT_CC2, ENABLE);
+//		utils_sys_unlock_cnt();
+		nvicEnableVector(TIM2_IRQn, 6);
+
+		break;
+
+	case MOTOR_TYPE_GPD:
+		break;
+
+	default:
+		break;
+	}
 
 	TIM_DeInit(TIM1);
 	TIM1->CNT = 0;

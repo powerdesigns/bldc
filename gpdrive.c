@@ -32,6 +32,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include "built_in_test.h"
 
 // Settings
 #define SAMPLE_BUFFER_SIZE			2048
@@ -445,9 +446,13 @@ static void set_modulation(float mod) {
 }
 
 static void stop_pwm_hw(void) {
+
 	m_is_running = false;
 	m_sample_buffer.write = 0;
 	m_sample_buffer.read = 0;
+
+	if (BIT_get_state())
+		return;
 
 #ifdef HW_HAS_DRV8313
 	DISABLE_BR();
