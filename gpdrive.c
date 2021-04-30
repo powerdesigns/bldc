@@ -446,7 +446,6 @@ static void set_modulation(float mod) {
 }
 
 static void stop_pwm_hw(void) {
-
 	m_is_running = false;
 	m_sample_buffer.write = 0;
 	m_sample_buffer.read = 0;
