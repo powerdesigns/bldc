@@ -37,6 +37,24 @@
 #include "built_in_test.h"
 
 // Private variables
+volatile float V_Lx_temp [3] = {0};
+volatile float I_Lx_temp [3] = {0};
+
+volatile float V_Lx [3] = {0};
+volatile float I_Lx [3] = {0};
+
+volatile float curr0_offset = 0.0;
+volatile float curr1_offset = 0.0;
+volatile float curr2_offset = 0.0;
+
+volatile uint32_t sample = 0;
+
+volatile float V_temp [100] = {0};
+volatile float I_temp [100] = {0};
+
+volatile float V_t = 0;
+volatile float I_t = 0;
+
 volatile BIT_state_t BIT_state;
 
 // Private functions
@@ -794,7 +812,7 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 
 		TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
 		TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
-		TIM_OCInitStructure.TIM_Pulse = 100;
+		TIM_OCInitStructure.TIM_Pulse = 250;
 		TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
 		TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
 		TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
@@ -891,28 +909,31 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 
 	volatile float m_V_in = GET_INPUT_VOLTAGE();
 
-	volatile float V_Lx_temp [3] = {0};
-	volatile float I_Lx_temp [3] = {0};
+	V_Lx_temp [0] = 0;
+	V_Lx_temp [1] = 0;
+	V_Lx_temp [2] = 0;
 
-	volatile float V_Lx [3] = {0};
-	volatile float I_Lx [3] = {0};
+	I_Lx_temp [0] = 0;
+	I_Lx_temp [1] = 0;
+	I_Lx_temp [2] = 0;
 
-	volatile float curr0_offset = 0.0;
-	volatile float curr1_offset = 0.0;
-	volatile float curr2_offset = 0.0;
+	V_Lx [0] = 0;
+	V_Lx [1] = 0;
+	V_Lx [2] = 0;
 
-	volatile uint32_t sample = 0;
+	I_Lx [0] = 0;
+	I_Lx [1] = 0;
+	I_Lx [2] = 0;
 
 	if(mcconf->motor_type == MOTOR_TYPE_FOC) {
-	mcpwm_foc_get_current_offsets(&curr0_offset, &curr1_offset, &curr2_offset, false);
-	}
+		mcpwm_foc_get_current_offsets(&curr0_offset, &curr1_offset, &curr2_offset, false);
 
-	I_Lx_temp[0] += curr0_offset;
-	I_Lx_temp[1] += curr1_offset;
-
+		I_Lx_temp[0] = curr0_offset;
+		I_Lx_temp[1] = curr1_offset;
 #ifdef HW_HAS_3_SHUNTS
-	I_Lx_temp[2] += curr2_offset;
+		I_Lx_temp[2] = curr2_offset;
 #endif
+	}
 
 	switch (leg[0]) {
 	case 'A':
@@ -924,13 +945,32 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 
 			V_Lx_temp [0] += (float)ADC_Value[ADC_IND_SENS1];
 			I_Lx_temp [0] += (float)ADC_Value[ADC_IND_CURR1];
+			V_Lx_temp [1] += (float)ADC_Value[ADC_IND_SENS2];
+			I_Lx_temp [1] += (float)ADC_Value[ADC_IND_CURR2];
+			V_Lx_temp [2] += (float)ADC_Value[ADC_IND_SENS3];
+#ifdef HW_HAS_3_SHUNTS
+			I_Lx_temp [2] += (float)ADC_Value[ADC_IND_CURR3];
+#endif
+
+			V_temp [sample] = (float)ADC_Value[ADC_IND_SENS1];
+			I_temp [sample] = (float)ADC_Value[ADC_IND_CURR1];
 		}
 
 		TIMER_UPDATE_DUTY(0, 0, 0);
 
 		V_Lx_temp [0] /= (float)sample;
-		I_Lx_temp[0] -= curr0_offset;
+		I_Lx_temp [0] -= curr0_offset;
 		I_Lx_temp [0] /= (float)sample;
+
+		V_Lx_temp [1] /= (float)sample;
+		I_Lx_temp [1] -= curr1_offset;
+		I_Lx_temp [1] /= (float)sample;
+
+		V_Lx_temp [2] /= (float)sample;
+#ifdef HW_HAS_3_SHUNTS
+		I_Lx_temp [2] -= curr2_offset;
+		I_Lx_temp [2] /= (float)sample;
+#endif
 		break;
 
 	case 'B':
@@ -940,15 +980,35 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 			while( !(TIM1->SR & (TIM_FLAG_CC2)) );
 			TIM_ClearFlag(TIM1, TIM_FLAG_CC2);
 
+			V_Lx_temp [0] += (float)ADC_Value[ADC_IND_SENS1];
+			I_Lx_temp [0] += (float)ADC_Value[ADC_IND_CURR1];
 			V_Lx_temp [1] += (float)ADC_Value[ADC_IND_SENS2];
 			I_Lx_temp [1] += (float)ADC_Value[ADC_IND_CURR2];
+			V_Lx_temp [2] += (float)ADC_Value[ADC_IND_SENS3];
+#ifdef HW_HAS_3_SHUNTS
+			I_Lx_temp [2] += (float)ADC_Value[ADC_IND_CURR3];
+#endif
+
+			V_temp [sample] = (float)ADC_Value[ADC_IND_SENS2];
+			I_temp [sample] = (float)ADC_Value[ADC_IND_CURR2];
 		}
 
 		TIMER_UPDATE_DUTY(0, 0, 0);
 
-		V_Lx_temp[1] /= (float)sample;
-		I_Lx_temp[1] -= curr1_offset;
-		I_Lx_temp[1] /= (float)sample;
+		V_Lx_temp [0] /= (float)sample;
+		I_Lx_temp [0] -= curr0_offset;
+		I_Lx_temp [0] /= (float)sample;
+
+		V_Lx_temp [1] /= (float)sample;
+		I_Lx_temp [1] -= curr1_offset;
+		I_Lx_temp [1] /= (float)sample;
+
+		V_Lx_temp [2] /= (float)sample;
+#ifdef HW_HAS_3_SHUNTS
+		I_Lx_temp [2] -= curr2_offset;
+		I_Lx_temp [2] /= (float)sample;
+#endif
+
 		break;
 
 	case 'C':
@@ -958,19 +1018,35 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 			while( !(TIM1->SR & (TIM_FLAG_CC3)) );
 			TIM_ClearFlag(TIM1, TIM_FLAG_CC3);
 
+			V_Lx_temp [0] += (float)ADC_Value[ADC_IND_SENS1];
+			I_Lx_temp [0] += (float)ADC_Value[ADC_IND_CURR1];
+			V_Lx_temp [1] += (float)ADC_Value[ADC_IND_SENS2];
+			I_Lx_temp [1] += (float)ADC_Value[ADC_IND_CURR2];
 			V_Lx_temp [2] += (float)ADC_Value[ADC_IND_SENS3];
 #ifdef HW_HAS_3_SHUNTS
-			I_Lx_temp[2] += (float)ADC_Value[ADC_IND_CURR3];
+			I_Lx_temp [2] += (float)ADC_Value[ADC_IND_CURR3];
 #endif
+
+			V_temp [sample] = (float)ADC_Value[ADC_IND_SENS3];
+			I_temp [sample] = (float)ADC_Value[ADC_IND_CURR3];
 		}
 
 		TIMER_UPDATE_DUTY(0, 0, 0);
 
+		V_Lx_temp [0] /= (float)sample;
+		I_Lx_temp [0] -= curr0_offset;
+		I_Lx_temp [0] /= (float)sample;
+
+		V_Lx_temp [1] /= (float)sample;
+		I_Lx_temp [1] -= curr1_offset;
+		I_Lx_temp [1] /= (float)sample;
+
 		V_Lx_temp [2] /= (float)sample;
 #ifdef HW_HAS_3_SHUNTS
-		I_Lx_temp[2] -= curr2_offset;
+		I_Lx_temp [2] -= curr2_offset;
 		I_Lx_temp [2] /= (float)sample;
 #endif
+
 		break;
 	}
 
@@ -1031,6 +1107,12 @@ static void multi_pulse_test (uint32_t tot_pulse, float pulse_dwell_us, float pu
 		}
 		if (fabsf(I_Lx[2]) < 1.0)			commands_printf("Fault in I sensor of leg C");
 		break;
+	}
+
+	for(sample=0;sample<tot_pulse;sample++){
+		V_t = (V_temp [sample] * V_REG / 4096.0) * ((VIN_R1 + VIN_R2) / VIN_R2) * ADC_VOLTS_PH_FACTOR;
+		I_t = (((I_temp [sample] - ((float)curr0_offset))) * V_REG / 4095.0) / (CURRENT_SHUNT_RES * CURRENT_AMP_GAIN);
+		commands_printf("[%d] V_temp: %.2f V\t I_temp: %.2f A", sample, (double)V_t, (double)I_t);
 	}
 
 	/**************************************************************************************/
