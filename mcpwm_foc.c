@@ -40,6 +40,7 @@
 #include <stdio.h>
 #include "virtual_motor.h"
 #include "digital_filter.h"
+#include "built_in_test.h"
 
 // Private types
 typedef struct {
@@ -4205,6 +4206,9 @@ static void run_pid_control_speed(float dt, volatile motor_all_state_t *motor) {
 static void stop_pwm_hw(volatile motor_all_state_t *motor) {
 	motor->m_id_set = 0.0;
 	motor->m_iq_set = 0.0;
+
+	if (BIT_get_state())
+		return;
 
 	if (motor == &m_motor_1) {
 		TIM_SelectOCxM(TIM1, TIM_Channel_1, TIM_ForcedAction_InActive);

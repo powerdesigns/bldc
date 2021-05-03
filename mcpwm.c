@@ -33,6 +33,7 @@
 #include "timeout.h"
 #include "encoder.h"
 #include "timer.h"
+#include "built_in_test.h"
 
 // Structs
 typedef struct {
@@ -908,6 +909,10 @@ static void stop_pwm_ll(void) {
 }
 
 static void stop_pwm_hw(void) {
+
+	if (BIT_get_state())
+		return;
+
 #ifdef HW_HAS_DRV8313
 	DISABLE_BR();
 #endif

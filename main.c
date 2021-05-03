@@ -55,6 +55,7 @@
 #endif
 #include "shutdown.h"
 #include "mempools.h"
+#include "built_in_test.h"
 
 /*
  * HW resources used:
@@ -226,6 +227,8 @@ int main(void) {
 
 	ledpwm_init();
 	mc_interface_init();
+
+	built_in_test_init();
 
 	commands_init();
 
