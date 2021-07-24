@@ -2952,7 +2952,11 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 	}
 
 	// Calculate duty cycle
-	motor_now->m_motor_state.duty_now = SIGN(motor_now->m_motor_state.vq) *
+	static float vq_filtered = 0.0;
+
+	UTILS_LP_FAST(vq_filtered, motor_now->m_motor_state.vq, 0.1);
+	//motor_now->m_motor_state.duty_now = SIGN(motor_now->m_motor_state.vq) *
+	motor_now->m_motor_state.duty_now = SIGN(vq_filtered) *
 			sqrtf(SQ(motor_now->m_motor_state.mod_d) + SQ(motor_now->m_motor_state.mod_q))
 			/ SQRT3_BY_2;
 
