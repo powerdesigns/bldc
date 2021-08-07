@@ -2952,20 +2952,19 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 	}
 
 	// Calculate duty cycle
-	//static float vq_filtered = 0.0;
-	static float duty_sign = 1.0;
-	float duty_now_abs = sqrtf(SQ(motor_now->m_motor_state.mod_d) + SQ(motor_now->m_motor_state.mod_q))
-							/ SQRT3_BY_2;
 
-	if(duty_now_abs < 0.5){
-		duty_sign = SIGN(motor_now->m_motor_state.vq);
-	}
-	//UTILS_LP_FAST(vq_filtered, motor_now->m_motor_state.vq, 0.1);
-	//motor_now->m_motor_state.duty_now = SIGN(motor_now->m_motor_state.vq) *
-//	motor_now->m_motor_state.duty_now = SIGN(vq_filtered) *
-//			sqrtf(SQ(motor_now->m_motor_state.mod_d) + SQ(motor_now->m_motor_state.mod_q))
-//			/ SQRT3_BY_2;
-	motor_now->m_motor_state.duty_now = duty_sign * duty_now_abs;
+	motor_now->m_motor_state.duty_now = SIGN(motor_now->m_motor_state.vq) *
+	   sqrtf(SQ(motor_now->m_motor_state.mod_d) + SQ(motor_now->m_motor_state.mod_q))
+	   / SQRT3_BY_2;
+	//static float vq_filtered = 0.0;
+//	static float duty_sign = 1.0;
+//	float duty_now_abs = sqrtf(SQ(motor_now->m_motor_state.mod_d) + SQ(motor_now->m_motor_state.mod_q))
+//							/ SQRT3_BY_2;
+//
+//	if(duty_now_abs < 0.5){
+//		duty_sign = SIGN(motor_now->m_motor_state.vq);
+//	}
+//	motor_now->m_motor_state.duty_now = duty_sign * duty_now_abs;
 
 	// Run PLL for speed estimation
 	pll_run(motor_now->m_motor_state.phase, dt, &motor_now->m_pll_phase, &motor_now->m_pll_speed, conf_now);
