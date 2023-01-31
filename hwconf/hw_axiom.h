@@ -153,11 +153,11 @@
 
 // NTC Termistors
 #define NTC_RES(adc_val)				((4095.0 * 10000.0) / adc_val - 10000.0)
-#define NTC_RES_IGBT(adc_val)			((4095.0 * 5000.0) / adc_val - 5000.0)
+#define NTC_RES_IGBT(adc_val)			((4095.0 * 8870.0 * 2) / adc_val - 18870.0)
 #define NTC_TEMP(adc_ind)				hw_axiom_get_highest_IGBT_temp()
 //#define NTC_TEMP(adc_ind)				(1.0 / ((logf(NTC_RES(ADC_Value[adc_ind]) / 10000.0) / 3434.0) + (1.0 / 298.15)) - 273.15)
 
-#define NTC_RES_MOTOR(adc_val)			((4095.0 * 10000.0) / adc_val - 10000.0)
+#define NTC_RES_MOTOR(adc_val)			((4095.0 * 8870.0 * 2) / adc_val - 18870.0)
 
 // If DAC enabled, only IGBT_TEMP_3 is available
 #ifdef HW_AXIOM_USE_DAC
@@ -312,10 +312,10 @@
 #define FOC_CONTROL_LOOP_FREQ_DIVIDER	1
 
 // Setting limits
-#define HW_LIM_CURRENT					-1000.0, 1000.0
+#define HW_LIM_CURRENT					-1200.0, 1200.0
 #define HW_LIM_CURRENT_IN				-1000.0, 1000.0
-#define HW_LIM_CURRENT_ABS				0.0, 1000.0
-#define HW_LIM_VIN						0.0, 550.0
+#define HW_LIM_CURRENT_ABS				0.0, 1500.0
+#define HW_LIM_VIN						0.0, 600.0
 #define HW_LIM_ERPM						-100e3, 100e3
 #define HW_LIM_DUTY_MIN					0.0, 0.1
 #define HW_LIM_DUTY_MAX					0.0, 1.0
