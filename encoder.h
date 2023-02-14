@@ -50,6 +50,8 @@ uint32_t encoder_resolver_loss_of_signal_error_cnt(void);
 float encoder_resolver_loss_of_tracking_error_rate(void);
 float encoder_resolver_degradation_of_signal_error_rate(void);
 float encoder_resolver_loss_of_signal_error_rate(void);
+uint32_t encoder_resolver_get_void_packet_cnt (void);
+float encoder_resolver_void_get_packet_error_rate(void);
 uint32_t encoder_sincos_get_signal_below_min_error_cnt(void);
 uint32_t encoder_sincos_get_signal_above_max_error_cnt(void);
 float encoder_sincos_get_signal_below_min_error_rate(void);

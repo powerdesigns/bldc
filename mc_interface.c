@@ -2183,6 +2183,10 @@ static void run_timer_tasks(volatile motor_if_state_t *motor) {
 			mcpwm_foc_is_using_encoder() &&
 			encoder_spi_get_error_rate() > 0.05) {
 		mc_interface_fault_stop(FAULT_CODE_ENCODER_SPI, !is_motor_1, false);
+		commands_printf("SPI encoder value: %d, errors: %d, error rate: %.3f %%",
+			(unsigned int)encoder_spi_get_val(),
+			encoder_spi_get_error_cnt(),
+			(double)encoder_spi_get_error_rate() * (double)100.0);
 	}
 
 	if(motor->m_conf.motor_type == MOTOR_TYPE_FOC &&
@@ -2211,6 +2215,12 @@ static void run_timer_tasks(volatile motor_if_state_t *motor) {
 			mc_interface_fault_stop(FAULT_CODE_RESOLVER_DOS, !is_motor_1, false);
 		if (encoder_resolver_loss_of_signal_error_rate() > 0.04)
 			mc_interface_fault_stop(FAULT_CODE_RESOLVER_LOS, !is_motor_1, false);
+		if (encoder_resolver_void_get_packet_error_rate() > 0.05){
+        	mc_interface_fault_stop( FAULT_CODE_ENCODER_SPI, !is_motor_1, false);
+			commands_printf("Resolver SPI void packet: errors: %d, error rate: %.3f %%",
+                    encoder_resolver_get_void_packet_cnt(),
+                    (double)encoder_resolver_void_get_packet_error_rate() * (double)100.0);
+		}
 	}
 	// TODO: Implement for BLDC and GPDRIVE
 	if(motor->m_conf.motor_type == MOTOR_TYPE_FOC) {
