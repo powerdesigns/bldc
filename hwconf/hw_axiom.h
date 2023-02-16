@@ -39,8 +39,8 @@
 #define HW_HAS_GATE_DRIVER_SUPPLY_MONITOR
 
 // Macros
-#define ENABLE_GATE()			palSetPad(GPIOC, 14)
-#define DISABLE_GATE()			palClearPad(GPIOC, 14)
+#define ENABLE_GATE()			palSetPad(GPIOH, 14)
+#define DISABLE_GATE()			palClearPad(GPIOH, 14)
 #define DCCAL_ON()
 #define DCCAL_OFF()
 #define IS_DRV_FAULT()			(!palReadPad(GPIOB, 12))
@@ -257,7 +257,8 @@
 // Resolver interface pins
 #define AD2S1205_SAMPLE_GPIO	GPIOB
 #define AD2S1205_SAMPLE_PIN		3
-
+#define AD2S1205_RDVEL_GPIO     GPIOC
+#define AD2S1205_RDVEL_PIN      14
 // NRF pins
 #define NRF_PORT_CSN			GPIOB
 #define NRF_PIN_CSN				12
