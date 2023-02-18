@@ -397,7 +397,7 @@ void encoder_init_mt6816_spi(void) {
 
 void encoder_init_ad2s1205_spi(void) {
 	TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
-
+	TIM_OCInitTypeDef TIM_OCInitStructure;
 	resolver_loss_of_tracking_error_rate = 0.0;
 	resolver_degradation_of_signal_error_rate = 0.0;
 	resolver_loss_of_signal_error_rate = 0.0;
@@ -429,7 +429,7 @@ void encoder_init_ad2s1205_spi(void) {
 
 	// Enable timer clock
 	HW_ENC_TIM_CLK_EN();
-
+/*
 	// Time Base configuration
 	TIM_TimeBaseStructure.TIM_Prescaler = 0;
 	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
@@ -445,6 +445,41 @@ void encoder_init_ad2s1205_spi(void) {
 	TIM_Cmd(HW_ENC_TIM, ENABLE);
 
 	nvicEnableVector(HW_ENC_TIM_ISR_CH, 6);
+*/
+	TIM_TimeBaseStructure.TIM_Prescaler = 0;
+	TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Up;
+	TIM_TimeBaseStructure.TIM_Period = 0xFFFF;
+	TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+	TIM_TimeBaseStructure.TIM_RepetitionCounter = 0;
+	TIM_TimeBaseInit(HW_ENC_TIM, &TIM_TimeBaseStructure);
+
+	TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+	TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+	TIM_OCInitStructure.TIM_Pulse = 5000;
+	TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;
+	TIM_OCInitStructure.TIM_OCNPolarity = TIM_OCNPolarity_High;
+	TIM_OCInitStructure.TIM_OCIdleState = TIM_OCIdleState_Set;
+	TIM_OCInitStructure.TIM_OCNIdleState = TIM_OCNIdleState_Set;
+	TIM_OC1Init(HW_ENC_TIM, &TIM_OCInitStructure);
+	TIM_OC1PreloadConfig(HW_ENC_TIM, TIM_OCPreload_Enable);
+	TIM_OC2Init(HW_ENC_TIM, &TIM_OCInitStructure);
+	TIM_OC2PreloadConfig(HW_ENC_TIM, TIM_OCPreload_Enable);
+
+	TIM_ARRPreloadConfig(HW_ENC_TIM, ENABLE);
+	TIM_CCPreloadControl(HW_ENC_TIM, ENABLE);
+
+	TIM_CtrlPWMOutputs(HW_ENC_TIM, ENABLE);
+
+	TIM_SelectInputTrigger(HW_ENC_TIM, TIM_TS_ITR0);
+	TIM_SelectSlaveMode(HW_ENC_TIM, TIM_SlaveMode_Reset);
+
+	// Enable CC2 interrupt, which will be fired in V0 and V7
+	TIM_ITConfig(HW_ENC_TIM, TIM_IT_Update, ENABLE);
+	utils_sys_unlock_cnt();
+
+	nvicEnableVector(HW_ENC_TIM_ISR_CH, 0);
+
+	TIM_Cmd(HW_ENC_TIM, ENABLE);
 
 	mode = RESOLVER_MODE_AD2S1205;
 	index_found = true;
@@ -803,7 +838,7 @@ static void spi_transfer(uint16_t *in_buf, const uint16_t *out_buf, int length) 
 			}
 
 			palClearPad(SPI_SW_SCK_GPIO, SPI_SW_SCK_PIN);
-			spi_delay();
+			//spi_delay();
 		}
 
 		if (in_buf) {
@@ -821,8 +856,8 @@ static void spi_end(void) {
 }
 
 static void spi_delay(void) {
-	__NOP();
-	__NOP();
+	//__NOP();
+	//__NOP();
 	__NOP();
 	__NOP();
 }
