@@ -900,6 +900,7 @@ void terminal_process_string(char *str) {
 		}
 
 		if (mcconf->m_sensor_port_mode == SENSOR_PORT_MODE_AD2S1205) {
+			commands_printf("\n");
 			commands_printf("Resolver Loss Of Tracking (>5%c error): errors: %d, error rate: %.3f %%", 0xB0,
 					encoder_resolver_loss_of_tracking_error_cnt(),
 					(double)encoder_resolver_loss_of_tracking_error_rate() * (double)100.0);
@@ -909,9 +910,13 @@ void terminal_process_string(char *str) {
 			commands_printf("Resolver Loss Of Signal (>57%c error): errors: %d, error rate: %.3f %%", 0xB0,
 					encoder_resolver_loss_of_signal_error_cnt(),
 					(double)encoder_resolver_loss_of_signal_error_rate() * (double)100.0);
-			 commands_printf("Resolver SPI void packet: errors: %d, error rate: %.3f %%",
+			commands_printf("Resolver SPI void packet: errors: %d, error rate: %.3f %%",
                     encoder_resolver_get_void_packet_cnt(),
-                    (double)encoder_resolver_void_get_packet_error_rate() * (double)100.0);		
+                    (double)encoder_resolver_void_get_packet_error_rate() * (double)100.0);
+			commands_printf("Resolver angle velocity readings: errors: %d, error rate: %.3f %%",
+                    encoder_resolver_get_vel_packet_cnt(),
+                    (double)encoder_resolver_get_vel_packet_error_rate() * (double)100.0);
+			commands_printf("\n");		
 		}
 	} else if (strcmp(argv[0], "encoder_clear_errors") == 0) {
 		encoder_ts57n8501_reset_errors();

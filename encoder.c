@@ -95,6 +95,8 @@ static uint32_t resolver_degradation_of_signal_error_cnt = 0;
 static uint32_t resolver_loss_of_signal_error_cnt = 0;
 static uint32_t resolver_void_packet_cnt = 0;
 static float resolver_void_packet_error_rate = 0;
+static uint32_t resolver_vel_packet_cnt = 0;
+static float resolver_vel_packet_error_rate = 0;
 
 static float sin_gain = 0.0;
 static float sin_offset = 0.0;
@@ -197,6 +199,14 @@ uint32_t encoder_resolver_get_void_packet_cnt(void) {
 
 float encoder_resolver_void_get_packet_error_rate(void) {
        return resolver_void_packet_error_rate;
+}
+
+uint32_t encoder_resolver_get_vel_packet_cnt(void) {
+       return resolver_vel_packet_cnt;
+}
+
+float encoder_resolver_get_vel_packet_error_rate(void) {
+       return resolver_vel_packet_error_rate;
 }
 
 uint32_t encoder_sincos_get_signal_below_min_error_cnt(void) {
@@ -689,9 +699,21 @@ void encoder_tim_isr(void) {
 		spi_val = pos;
 
 		uint16_t RDVEL = pos & 0x0008; // 1 means a position read
+		
+		if(spi_val == 0){ // an empty SPI packet means that the resolver IC is not responding
+			++resolver_void_packet_cnt;
+			UTILS_LP_FAST(resolver_void_packet_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+		}else{
+			UTILS_LP_FAST(resolver_void_packet_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+			if(RDVEL == 0){
+            	++resolver_vel_packet_cnt;
+            	UTILS_LP_FAST(resolver_vel_packet_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+			}else{
+				UTILS_LP_FAST(resolver_vel_packet_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+			}
+		}
 
 		if((RDVEL != 0)){
-			UTILS_LP_FAST(resolver_void_packet_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 			bool DOS = ((pos & 0x04) == 0);
 			bool LOT = ((pos & 0x02) == 0);
 			bool LOS = DOS && LOT;
@@ -742,9 +764,6 @@ void encoder_tim_isr(void) {
 			{
 				last_enc_angle = ((float)pos * 360.0) / 4096.0;
 			}
-		}else{
-            ++resolver_void_packet_cnt;
-            UTILS_LP_FAST(resolver_void_packet_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 		}
 	}
 }

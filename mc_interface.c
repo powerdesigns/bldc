@@ -2218,6 +2218,8 @@ static void run_timer_tasks(volatile motor_if_state_t *motor) {
 			mc_interface_fault_stop(FAULT_CODE_RESOLVER_DOS, !is_motor_1, false);
 		if (encoder_resolver_loss_of_signal_error_rate() > 0.04)
 			mc_interface_fault_stop(FAULT_CODE_RESOLVER_LOS, !is_motor_1, false);
+		if (encoder_resolver_get_vel_packet_error_rate() > 0.05)
+			mc_interface_fault_stop(FAULT_CODE_ENCODER_SPI, !is_motor_1, false);
 		if (encoder_resolver_void_get_packet_error_rate() > 0.05){
         	mc_interface_fault_stop( FAULT_CODE_ENCODER_SPI, !is_motor_1, false);
 			commands_printf("Resolver SPI void packet: errors: %d, error rate: %.3f %%",
