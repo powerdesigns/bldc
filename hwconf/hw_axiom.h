@@ -281,6 +281,10 @@
 #define HW_SPI_PORT_MISO		GPIOC
 #define HW_SPI_PIN_MISO			11
 
+// AUX pins
+#define AUX_GPIO				GPIOA
+#define AUX_PIN					7
+
 // Measurement macros
 #define ADC_V_L1				(ADC_Value[ADC_IND_SENS1]-2048)		//phase voltages are centered in 1.65V
 #define ADC_V_L2				(ADC_Value[ADC_IND_SENS2]-2048)

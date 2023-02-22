@@ -900,7 +900,6 @@ void terminal_process_string(char *str) {
 		}
 
 		if (mcconf->m_sensor_port_mode == SENSOR_PORT_MODE_AD2S1205) {
-			commands_printf("\n");
 			commands_printf("Resolver Loss Of Tracking (>5%c error): errors: %d, error rate: %.3f %%", 0xB0,
 					encoder_resolver_loss_of_tracking_error_cnt(),
 					(double)encoder_resolver_loss_of_tracking_error_rate() * (double)100.0);

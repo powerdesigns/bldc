@@ -3054,7 +3054,12 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 #else
 	mc_interface_mc_timer_isr(false);
 #endif
-
+	// for debugging purpose
+	if (mc_interface_get_fault() == FAULT_CODE_NONE){
+		palClearPad(GPIOA, 7);
+	}else{
+		palSetPad(GPIOA, 7);
+	}
 	m_isr_motor = 0;
 	m_last_adc_isr_duration = timer_seconds_elapsed_since(t_start);
 }
