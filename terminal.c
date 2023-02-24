@@ -900,21 +900,34 @@ void terminal_process_string(char *str) {
 		}
 
 		if (mcconf->m_sensor_port_mode == SENSOR_PORT_MODE_AD2S1205) {
+			
+			commands_printf("SPI encoder peak error rate: %.3f %%",
+					(double)encoder_resolver_get_peak_SPI_error_rate() * (double)100.0);
 			commands_printf("Resolver Loss Of Tracking (>5%c error): errors: %d, error rate: %.3f %%", 0xB0,
 					encoder_resolver_loss_of_tracking_error_cnt(),
 					(double)encoder_resolver_loss_of_tracking_error_rate() * (double)100.0);
+			commands_printf("Resolver Loss Of Tracking peak error rate: %.3f %%",
+					(double)encoder_resolver_get_peak_LOT_error_rate() * (double)100.0);
 			commands_printf("Resolver Degradation Of Signal (>33%c error): errors: %d, error rate: %.3f %%", 0xB0,
 					encoder_resolver_degradation_of_signal_error_cnt(),
 					(double)encoder_resolver_degradation_of_signal_error_rate() * (double)100.0);
+			commands_printf("Resolver Degradation Of Signal peak error rate: %.3f %%",
+					(double)encoder_resolver_get_peak_DOS_error_rate() * (double)100.0);
 			commands_printf("Resolver Loss Of Signal (>57%c error): errors: %d, error rate: %.3f %%", 0xB0,
 					encoder_resolver_loss_of_signal_error_cnt(),
 					(double)encoder_resolver_loss_of_signal_error_rate() * (double)100.0);
+			commands_printf("Resolver Loss Of Signal peak error rate: %.3f %%",
+					(double)encoder_resolver_get_peak_LOS_error_rate() * (double)100.0);
 			commands_printf("Resolver SPI void packet: errors: %d, error rate: %.3f %%",
                     encoder_resolver_get_void_packet_cnt(),
                     (double)encoder_resolver_void_get_packet_error_rate() * (double)100.0);
+			commands_printf("Resolver SPI void packet peak error rate: %.3f %%",
+					(double)encoder_resolver_get_peak_VOIDspi_error_rate() * (double)100.0);
 			commands_printf("Resolver angle velocity readings: errors: %d, error rate: %.3f %%",
                     encoder_resolver_get_vel_packet_cnt(),
                     (double)encoder_resolver_get_vel_packet_error_rate() * (double)100.0);
+			commands_printf("Resolver angle velocity readings peak error rate: %.3f %%",
+					(double)encoder_resolver_get_peak_VELread_error_rate() * (double)100.0);
 			commands_printf("\n");		
 		}
 	} else if (strcmp(argv[0], "encoder_clear_errors") == 0) {
@@ -922,6 +935,9 @@ void terminal_process_string(char *str) {
 		commands_printf("Done!\n");
 	} else if (strcmp(argv[0], "encoder_clear_multiturn") == 0) {
 		encoder_ts57n8501_reset_multiturn();
+		commands_printf("Done!\n");
+	} else if  (strcmp(argv[0], "resolver_clear_errors") == 0) {
+		encoder_resolver_clean_error_cnt();
 		commands_printf("Done!\n");
 	} else if (strcmp(argv[0], "uptime") == 0) {
 		commands_printf("Uptime: %.2f s\n", (double)chVTGetSystemTimeX() / (double)CH_CFG_ST_FREQUENCY);
@@ -1212,6 +1228,9 @@ void terminal_process_string(char *str) {
 
 		commands_printf("encoder_clear_multiturn");
 		commands_printf("  Clear multiturn counter of the TS5700N8501 encoder.)");
+
+		commands_printf("resolver_clear_errors");
+		commands_printf("  Clear AD2S1205 resolver errors count.");
 
 		commands_printf("uptime");
 		commands_printf("  Prints how many seconds have passed since boot.");

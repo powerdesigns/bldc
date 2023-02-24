@@ -62,5 +62,11 @@ uint8_t* encoder_ts5700n8501_get_raw_status(void);
 int16_t encoder_ts57n8501_get_abm(void);
 void encoder_ts57n8501_reset_errors(void);
 void encoder_ts57n8501_reset_multiturn(void);
-
+float encoder_resolver_get_peak_LOT_error_rate(void);
+float encoder_resolver_get_peak_LOS_error_rate(void);
+float encoder_resolver_get_peak_DOS_error_rate(void);
+float encoder_resolver_get_peak_SPI_error_rate(void);
+float encoder_resolver_get_peak_VELread_error_rate(void);
+float encoder_resolver_get_peak_VOIDspi_error_rate(void);
+void encoder_resolver_clean_error_cnt(void);
 #endif /* ENCODER_H_ */

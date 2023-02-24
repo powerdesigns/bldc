@@ -97,6 +97,12 @@ static uint32_t resolver_void_packet_cnt = 0;
 static float resolver_void_packet_error_rate = 0;
 static uint32_t resolver_vel_packet_cnt = 0;
 static float resolver_vel_packet_error_rate = 0;
+static float resolver_LOT_peak_error_rate = 0.0;
+static float resolver_LOS_peak_error_rate = 0.0;
+static float resolver_DOS_peak_error_rate = 0.0;
+static float resolver_SPI_peak_error_rate = 0.0;
+static float resolver_VELread_peak_error_rate = 0.0;
+static float resolver_VOIDspi_peak_error_rate = 0.0;
 
 static float sin_gain = 0.0;
 static float sin_offset = 0.0;
@@ -207,6 +213,51 @@ uint32_t encoder_resolver_get_vel_packet_cnt(void) {
 
 float encoder_resolver_get_vel_packet_error_rate(void) {
        return resolver_vel_packet_error_rate;
+}
+
+float encoder_resolver_get_peak_LOT_error_rate(void) {
+       return resolver_LOT_peak_error_rate;
+}
+
+float encoder_resolver_get_peak_LOS_error_rate(void) {
+       return resolver_LOS_peak_error_rate;
+}
+
+float encoder_resolver_get_peak_DOS_error_rate(void) {
+       return resolver_DOS_peak_error_rate;
+}
+
+float encoder_resolver_get_peak_SPI_error_rate(void) {
+       return resolver_SPI_peak_error_rate;
+}
+
+float encoder_resolver_get_peak_VELread_error_rate(void) {
+       return resolver_VELread_peak_error_rate;
+}
+
+float encoder_resolver_get_peak_VOIDspi_error_rate(void) {
+       return resolver_VOIDspi_peak_error_rate;
+}
+
+void encoder_resolver_clean_error_cnt(void){
+	spi_error_cnt = 0;
+	spi_error_rate = 0.0;
+	resolver_loss_of_tracking_error_rate = 0.0;
+	resolver_degradation_of_signal_error_rate = 0.0;
+	resolver_loss_of_signal_error_rate = 0.0;
+	resolver_loss_of_tracking_error_cnt = 0;
+	resolver_degradation_of_signal_error_cnt = 0;
+	resolver_loss_of_signal_error_cnt = 0;
+	resolver_void_packet_cnt = 0;
+	resolver_void_packet_error_rate = 0.0;
+	resolver_vel_packet_cnt = 0;
+	resolver_vel_packet_error_rate = 0.0;
+	resolver_LOT_peak_error_rate = 0.0;
+	resolver_LOS_peak_error_rate = 0.0;	
+	resolver_DOS_peak_error_rate = 0.0;
+	resolver_SPI_peak_error_rate = 0.0;
+	resolver_VELread_peak_error_rate = 0.0;
+	resolver_VOIDspi_peak_error_rate = 0.0;
 }
 
 uint32_t encoder_sincos_get_signal_below_min_error_cnt(void) {
@@ -703,11 +754,17 @@ void encoder_tim_isr(void) {
 		if(spi_val == 0){ // an empty SPI packet means that the resolver IC is not responding
 			++resolver_void_packet_cnt;
 			UTILS_LP_FAST(resolver_void_packet_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+			if(resolver_void_packet_error_rate > resolver_VOIDspi_peak_error_rate){
+				resolver_VOIDspi_peak_error_rate = resolver_void_packet_error_rate;
+			}
 		}else{
 			UTILS_LP_FAST(resolver_void_packet_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 			if(RDVEL == 0){
             	++resolver_vel_packet_cnt;
             	UTILS_LP_FAST(resolver_vel_packet_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+				if(resolver_vel_packet_error_rate > resolver_VELread_peak_error_rate ) {
+					resolver_VELread_peak_error_rate = resolver_vel_packet_error_rate;
+				}
 			}else{
 				UTILS_LP_FAST(resolver_vel_packet_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 			}
@@ -730,6 +787,9 @@ void encoder_tim_isr(void) {
 				angle_is_correct = false;
 				++spi_error_cnt;
 				UTILS_LP_FAST(spi_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+				if(spi_error_rate > resolver_SPI_peak_error_rate){
+					resolver_SPI_peak_error_rate = spi_error_rate;
+				}
 			}
 
 			pos &= 0xFFF0;
@@ -740,6 +800,9 @@ void encoder_tim_isr(void) {
 				angle_is_correct = false;
 				++resolver_loss_of_tracking_error_cnt;
 				UTILS_LP_FAST(resolver_loss_of_tracking_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+				if(resolver_loss_of_tracking_error_rate > resolver_LOT_peak_error_rate) {
+					resolver_LOT_peak_error_rate = resolver_loss_of_tracking_error_rate;
+				}
 			} else {
 				UTILS_LP_FAST(resolver_loss_of_tracking_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 			}
@@ -748,6 +811,9 @@ void encoder_tim_isr(void) {
 				angle_is_correct = false;
 				++resolver_degradation_of_signal_error_cnt;
 				UTILS_LP_FAST(resolver_degradation_of_signal_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+				if(resolver_degradation_of_signal_error_rate > resolver_DOS_peak_error_rate ) {
+					resolver_DOS_peak_error_rate = resolver_degradation_of_signal_error_rate;
+				}
 			} else {
 				UTILS_LP_FAST(resolver_degradation_of_signal_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 			}
@@ -756,6 +822,9 @@ void encoder_tim_isr(void) {
 				angle_is_correct = false;
 				++resolver_loss_of_signal_error_cnt;
 				UTILS_LP_FAST(resolver_loss_of_signal_error_rate, 1.0, 1./AD2S1205_SAMPLE_RATE_HZ);
+				if(resolver_loss_of_signal_error_rate > resolver_LOS_peak_error_rate ) {
+					resolver_LOS_peak_error_rate = resolver_loss_of_signal_error_rate;
+				}
 			} else {
 				UTILS_LP_FAST(resolver_loss_of_signal_error_rate, 0.0, 1./AD2S1205_SAMPLE_RATE_HZ);
 			}

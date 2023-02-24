@@ -2222,9 +2222,6 @@ static void run_timer_tasks(volatile motor_if_state_t *motor) {
 			mc_interface_fault_stop(FAULT_CODE_ENCODER_SPI, !is_motor_1, false);
 		if (encoder_resolver_void_get_packet_error_rate() > 0.05){
         	mc_interface_fault_stop( FAULT_CODE_ENCODER_SPI, !is_motor_1, false);
-			commands_printf("Resolver SPI void packet: errors: %d, error rate: %.3f %%",
-                    encoder_resolver_get_void_packet_cnt(),
-                    (double)encoder_resolver_void_get_packet_error_rate() * (double)100.0);
 		}
 	}
 	// TODO: Implement for BLDC and GPDRIVE
