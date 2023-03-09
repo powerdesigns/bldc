@@ -44,7 +44,7 @@
 #include <math.h>
 
 // Settings
-#define FAULT_VEC_LEN						26
+#define FAULT_VEC_LEN						25
 #define CALLBACK_LEN						40
 
 // Private types
