@@ -314,9 +314,9 @@
 #define FOC_CONTROL_LOOP_FREQ_DIVIDER	1
 
 // Setting limits
-#define HW_LIM_CURRENT					-600.0, 600.0
+#define HW_LIM_CURRENT					-1100.0, 11000.0
 #define HW_LIM_CURRENT_IN				-500.0, 500.0
-#define HW_LIM_CURRENT_ABS				0.0, 800.0
+#define HW_LIM_CURRENT_ABS				0.0, 1100.0
 #define HW_LIM_VIN						0.0, 525.0
 #define HW_LIM_ERPM						-100e3, 100e3
 #define HW_LIM_DUTY_MIN					0.0, 0.1
